@@ -5,38 +5,32 @@ from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from supabase import create_client
 
-# Sozlamalar
-BOT_TOKEN = "8980966419:AAFVmCqV8Q7GOP0aBqvjxy-GXu-EOytA9do"
-SUPABASE_URL = "https://waarsonurnghoocakrac.supabase.co"
-SUPABASE_KEY = "bu_yerga_anon_key_yozing"
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-# Boshlash
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 logging.basicConfig(level=logging.INFO)
 
-# Asosiy menyu
 menu = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text="📚 Kitoblar"), KeyboardButton(text="🎧 Audio-kitoblar")],
     [KeyboardButton(text="🔍 Qidirish"), KeyboardButton(text="📂 Kategoriyalar")],
     [KeyboardButton(text="👤 Profilim"), KeyboardButton(text="👥 Do'st taklif qil")],
 ], resize_keyboard=True)
 
-# /start
 @dp.message(Command("start"))
 async def start(message: types.Message):
     args = message.text.split()
     if len(args) > 1 and args[1].startswith("ref_"):
         referrer_id = args[1].replace("ref_", "")
-        # Referral saqlash
         supabase.table("referrals").insert({
             "referrer_id": referrer_id,
             "new_user_id": str(message.from_user.id)
         }).execute()
 
-    # Foydalanuvchini saqlash
     supabase.table("users").upsert({
         "user_id": str(message.from_user.id),
         "username": message.from_user.username,
@@ -52,7 +46,6 @@ async def start(message: types.Message):
         parse_mode="Markdown"
     )
 
-# Kitoblar
 @dp.message(lambda m: m.text == "📚 Kitoblar")
 async def kitoblar(message: types.Message):
     await message.answer("📚 Kategoriyani tanlang:", reply_markup=ReplyKeyboardMarkup(keyboard=[
@@ -60,12 +53,10 @@ async def kitoblar(message: types.Message):
         [KeyboardButton(text="🧠 Rivojlanish"), KeyboardButton(text="🔙 Orqaga")],
     ], resize_keyboard=True))
 
-# Qidirish
 @dp.message(lambda m: m.text == "🔍 Qidirish")
 async def qidirish(message: types.Message):
     await message.answer("🔍 Kitob nomini yozing:")
 
-# Profil
 @dp.message(lambda m: m.text == "👤 Profilim")
 async def profil(message: types.Message):
     user = supabase.table("users").select("*").eq(
@@ -85,7 +76,6 @@ async def profil(message: types.Message):
         parse_mode="Markdown"
     )
 
-# Referral
 @dp.message(lambda m: m.text == "👥 Do'st taklif qil")
 async def referral(message: types.Message):
     link = f"https://t.me/KitobUY_bot?start=ref_{message.from_user.id}"
@@ -97,7 +87,6 @@ async def referral(message: types.Message):
         parse_mode="Markdown"
     )
 
-# Matn qidirish
 @dp.message()
 async def search_book(message: types.Message):
     query = message.text
@@ -117,7 +106,6 @@ async def search_book(message: types.Message):
             parse_mode="Markdown"
         )
 
-# Ishga tushirish
 if __name__ == "__main__":
     import asyncio
     asyncio.run(dp.start_polling(bot))
